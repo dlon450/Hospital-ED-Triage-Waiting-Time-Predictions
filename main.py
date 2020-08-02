@@ -54,3 +54,60 @@ plt.show()
 
 unique, counts = np.unique(y_test, return_counts = True)
 print("Accuracy for majority class model: " + str(counts[0]/sum(counts)))
+
+## RANDOM FOREST ##
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix, classification_report
+
+# Normalise data through feature scaling to increase speed
+scaler = StandardScaler()
+X_trainRF = scaler.fit_transform(X_train)
+X_testRF = scaler.transform(X_test)
+
+# note more trees seems to lead to better accuracy until certain point (10->0.16, 100->0.18, 500->0.19)
+# criterion does not lead to noticeable change in accuracy
+# balanced class weights has no noticeable effect on accuracy for 10 trees but better for 100 and 500 trees
+classifier = RandomForestClassifier(n_estimators = 100, criterion = 'entropy', random_state = 4, class_weight = 'balanced')
+classifier.fit(X_trainRF, y_train)
+
+# Predicting the Test set results and evaluating results
+y_predRF = classifier.predict(X_test)
+print(classification_report(y_test,y_predRF,zero_division=0))
+
+# for full confusion matrix
+#cm = pd.crosstab(y_test, y_pred, rownames=['Actual Times'], colnames=['Predicted Times'])
+#print(cm)
+
+# 20 by 20 confusion matrix (more visual, submatrix of confusion matrix)
+mat = confusion_matrix(y_predRF, y_test)
+submat = mat[:20,:20]
+subx_ypredRF = list(set(y_predRF))
+suby_ytest = list(set(y_test))
+subx_ypredRF.sort()
+suby_ytest.sort()
+fig, ax = plt.subplots(figsize=(10,10))
+sns.heatmap(submat.T, square=True, annot=True, fmt='d', cbar=False,xticklabels=suby_ytest[:20], yticklabels=suby_ytest[:20], ax=ax)
+plt.xlabel('Predicted Times')
+plt.ylabel('Actual Times')
+
+## NAIVE BAYES ##
+
+from sklearn.naive_bayes import MultinomialNB
+
+# need to fix imbalanced data - could use frequency count thing
+
+model = MultinomialNB() # default has Laplace smoothing
+model.fit(X_train,y_train)
+y_predNB = model.predict(X_test)
+print(classification_report(y_test,y_predNB,zero_division=0))
+
+mat2 = confusion_matrix(y_predNB, y_test)
+submat2 = mat2[:20,:20]
+subx_ypredNB = list(set(y_predNB))
+subx_ypredNB.sort()
+fig2, ax2 = plt.subplots(figsize=(10,10))
+sns.heatmap(submat2.T, square=True, annot=True, fmt='d', cbar=False, xticklabels=suby_ytest[:20], yticklabels=suby_ytest[:20], ax=ax2)
+plt.xlabel('Predicted Times')
+plt.ylabel('Actual Times')
